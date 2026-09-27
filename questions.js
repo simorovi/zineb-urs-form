@@ -12,7 +12,7 @@
 // Le domande `scelta`/`multi` hanno anche un campo note libero, salvato come `<id>_note`
 // (etichetta personalizzabile con `note`, oppure `note: false` per toglierlo).
 
-window.URS_VERSIONE = '2026-09-20';
+window.URS_VERSIONE = '2026-09-27';
 
 window.URS_SEZIONI = [
   {
@@ -108,8 +108,10 @@ window.URS_SEZIONI = [
       {
         id: 'lingue_sito',
         tipo: 'scelta',
-        testo: 'In quali lingue deve essere il sito?',
-        opzioni: ['Solo italiano', 'Italiano e inglese', 'Altro'],
+        testo:
+          'Abbiamo previsto il sito in italiano e in inglese: l’italiano come lingua principale, l’inglese per i clienti stranieri. Ti va bene?',
+        opzioni: ['Sì, va bene', 'Vorrei cambiare qualcosa'],
+        note: 'Se vuoi cambiare qualcosa, scrivi cosa',
       },
     ],
   },
@@ -236,7 +238,8 @@ window.URS_SEZIONI = [
         id: 'colori_font',
         tipo: 'lungo',
         testo: 'Colori e font che ti piacciono, o siti/brand che trovi belli',
-        aiuto: 'Puoi incollare anche i link.',
+        aiuto:
+          'Puoi incollare anche i link. Per ogni link scrivi cosa ti piace: il font, i colori, come sono mostrate le foto, l’atmosfera…',
       },
       {
         id: 'branding_esistente',
@@ -360,11 +363,10 @@ window.URS_SEZIONI = [
       {
         id: 'hosting',
         tipo: 'scelta',
-        testo: 'Hai preferenze su dove ospitare il sito (hosting)?',
-        opzioni: [
-          'Sì, ho una preferenza',
-          'No, mi serve un consiglio in base a velocità e costi',
-        ],
+        testo:
+          'Il sito sarà ospitato su Cloudflare: è veloce, affidabile e gratuito anche per un sito professionale come il tuo. Ti va bene?',
+        opzioni: ['Sì, va bene', 'Vorrei cambiare qualcosa'],
+        note: 'Se vuoi cambiare qualcosa, scrivi cosa',
       },
       {
         id: 'traffico',
@@ -381,22 +383,18 @@ window.URS_SEZIONI = [
       {
         id: 'tempo_caricamento',
         tipo: 'scelta',
-        testo: 'Hai in mente un tempo di caricamento da raggiungere?',
-        opzioni: [
-          'Sì, ho un obiettivo preciso',
-          'No, lascio a voi l’obiettivo tecnico (es. sotto i 2 secondi, Core Web Vitals di Google)',
-        ],
+        testo:
+          'Abbiamo fissato un obiettivo di velocità preciso: il sito deve superare i controlli di Google sulla velocità (Core Web Vitals), cioè caricarsi in meno di 2,5 secondi anche da telefono. Ti va bene?',
+        opzioni: ['Sì, va bene', 'Vorrei cambiare qualcosa'],
+        note: 'Se vuoi cambiare qualcosa, scrivi cosa',
       },
       {
         id: 'aggiornamento_portfolio',
         tipo: 'scelta',
         testo:
-          'Il sito sarà fatto su misura, senza un CMS tipo WordPress. Come vuoi aggiornare il portfolio in futuro?',
-        opzioni: [
-          'Chiederò aiuto per ogni modifica',
-          'Mi serve un piccolo pannello semplice per farlo da sola',
-          'Non so, parliamone',
-        ],
+          'Il sito sarà fatto su misura, senza WordPress. Per aggiornare il portfolio avrai un pannello tutto tuo: carichi la foto, scegli la categoria, scrivi una breve descrizione e il sito si aggiorna da solo in pochi minuti. Ti va bene?',
+        opzioni: ['Sì, va bene', 'Vorrei cambiare qualcosa'],
+        note: 'Se vuoi cambiare qualcosa, scrivi cosa',
       },
     ],
   },
