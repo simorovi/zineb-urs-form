@@ -11,6 +11,5 @@ window.URS_CONFIG = {
   // SHA-256 della password di accesso, scritta in minuscolo (maiuscole e spazi ai lati vengono
   // ignorati). Non è sicurezza reale: serve solo a scoraggiare i curiosi.
   // Per cambiarla: echo -n 'nuovapassword' | sha256sum
-  // Password temporanea attuale: zineb2026
   PASSWORD_SHA256: '81aeff282c2fd14c28266010afe2dc0afb49efc8e7f9454347a04a5f4327cc91',
 };

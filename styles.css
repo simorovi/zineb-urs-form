@@ -122,6 +122,17 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.2; }
 .intro p { margin: 0 0 12px; }
 .riepilogo { color: var(--testo-tenue); font-size: 0.95rem; }
 
+.avviso {
+  margin: 4px 0 16px;
+  padding: 12px 14px;
+  border-left: 4px solid var(--accento);
+  border-radius: 0 10px 10px 0;
+  background: var(--accento-tenue);
+  font-size: 0.95rem;
+}
+.avviso p { margin: 0; }
+.avviso p + p { margin-top: 4px; }
+
 /* ---------- Sezioni ---------- */
 
 .sezione {

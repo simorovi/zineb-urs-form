@@ -75,5 +75,5 @@ Poi cancella la riga di prova dalla dashboard (*Table Editor → urs_responses*)
 
 ```sh
 python3 -m http.server 8000
-# poi apri http://localhost:8000/#k=zineb2026
+# poi apri http://localhost:8000/#k=<password>
 ```
