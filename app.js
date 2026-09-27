@@ -51,13 +51,20 @@
 
   const normalizza = (s) => s.trim().toLowerCase();
 
-  async function sha256(testo) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(testo));
-    return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
+  // PBKDF2 con molte iterazioni: rende lentissimo risalire alla password partendo dall'hash pubblico.
+  async function hashPassword(password) {
+    const enc = new TextEncoder();
+    const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(CFG.PASSWORD_SALT), iterations: CFG.PASSWORD_ITERAZIONI },
+      base,
+      256
+    );
+    return Array.from(new Uint8Array(bits), (b) => b.toString(16).padStart(2, '0')).join('');
   }
 
   async function avvia() {
-    const atteso = (CFG.PASSWORD_SHA256 || '').toLowerCase();
+    const atteso = (CFG.PASSWORD_HASH || '').toLowerCase();
     if (!atteso || !(window.crypto && crypto.subtle)) return mostraApp();
     if (store.get(KEY_ACCESSO) === atteso) return mostraApp();
 
@@ -67,7 +74,7 @@
       history.replaceState(null, '', location.pathname + location.search);
       let pw = '';
       try { pw = decodeURIComponent(m[1]); } catch (e) { /* link rovinato: chiediamo la password */ }
-      if (pw && (await sha256(normalizza(pw))) === atteso) {
+      if (pw && (await hashPassword(normalizza(pw))) === atteso) {
         store.set(KEY_ACCESSO, atteso);
         return mostraApp();
       }
@@ -76,9 +83,17 @@
     $('#gate').hidden = false;
     const input = $('#gate-password');
     input.focus();
+    const btn = $('#gate-form button');
     $('#gate-form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
-      if ((await sha256(normalizza(input.value))) === atteso) {
+      if (btn.disabled) return;
+      // Il calcolo dell'hash richiede circa un secondo sui telefoni meno recenti.
+      btn.disabled = true;
+      btn.textContent = 'Verifica…';
+      const ok = (await hashPassword(normalizza(input.value))) === atteso;
+      btn.disabled = false;
+      btn.textContent = 'Entra';
+      if (ok) {
         store.set(KEY_ACCESSO, atteso);
         $('#gate').hidden = true;
         mostraApp();

@@ -8,8 +8,10 @@ window.URS_CONFIG = {
   SUPABASE_URL: 'https://INSERISCI-ID-PROGETTO.supabase.co',
   SUPABASE_ANON_KEY: 'INSERISCI-CHIAVE-ANON',
 
-  // SHA-256 della password di accesso, scritta in minuscolo (maiuscole e spazi ai lati vengono
-  // ignorati). Non è sicurezza reale: serve solo a scoraggiare i curiosi.
-  // Per cambiarla: echo -n 'nuovapassword' | sha256sum
-  PASSWORD_SHA256: '81aeff282c2fd14c28266010afe2dc0afb49efc8e7f9454347a04a5f4327cc91',
+  // Password di accesso, salvata SOLO come hash PBKDF2-SHA256 (mai in chiaro, in nessun file).
+  // Non è sicurezza reale: il codice è pubblico e il controllo avviene nel browser. Serve solo a
+  // scoraggiare i curiosi. Per cambiarla vedi README → "Cambiare la password".
+  PASSWORD_SALT: 'a914b231fbf9e5201e0270a596c3fdd8',
+  PASSWORD_ITERAZIONI: 600000,
+  PASSWORD_HASH: 'f8c246ba4a5da67da32debbf118275a0ad31f5b27aca82f18607dfc15ff209a1',
 };

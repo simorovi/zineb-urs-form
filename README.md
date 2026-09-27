@@ -12,6 +12,7 @@ Specifiche complete in [`CLAUDE.md`](CLAUDE.md).
 | `index.html`, `styles.css`, `app.js` | Il modulo |
 | `questions.js` | Le domande (una sezione per ogni capitolo dell'URS) |
 | `config.js` | URL Supabase, chiave **anon** pubblica, hash della password |
+| `tools/hash-password.mjs` | Genera l'hash per una nuova password |
 | `supabase/setup.sql` | Tabella `urs_responses` + Row Level Security |
 
 ## Setup (una volta)
@@ -24,15 +25,26 @@ Specifiche complete in [`CLAUDE.md`](CLAUDE.md).
 
    ⚠️ Mai la `service_role` o una `sb_secret_…`: il file è pubblico. Il form comunque si rifiuta di inviare
    se riconosce una chiave privata.
-3. **Password** — scegli una password e mettine l'hash in `PASSWORD_SHA256`:
-   ```sh
-   echo -n 'lapassword' | sha256sum
-   ```
-   (scrivila in minuscolo: il form ignora maiuscole e spazi ai lati).
-4. **GitHub Pages** — *Settings → Pages → Deploy from a branch* → `main` / root.
-5. **Link per Zineb** — mandale `https://simorovi.github.io/zineb-urs-form/#k=lapassword`: la password
-   è nel link (dopo `#`, quindi non arriva a nessun server) e la pagina entra da sola. Una volta entrata,
-   il browser se lo ricorda. Se perde il link, basta rimandarglielo o dirle la password.
+3. **Password** — già impostata (vedi *Cambiare la password* qui sotto). In `config.js` c'è solo il suo
+   hash PBKDF2, mai la password in chiaro.
+4. **GitHub Pages** — *Settings → Pages → Build and deployment → Deploy from a branch*, poi scegli il
+   branch predefinito del repo e la cartella `/ (root)`.
+5. **Link per Zineb** — mandale in privato `https://simorovi.github.io/zineb-urs-form/#k=<password>`:
+   la pagina entra da sola e il browser se lo ricorda. La parte dopo `#` non arriva a nessun server, ma
+   il link contiene la password: non pubblicarlo da nessuna parte. Se lo perde, basta rimandarglielo.
+
+## Cambiare la password
+
+La password non va **mai** scritta in chiaro nel repo (né in file, né in commenti, né nei messaggi di
+commit): il repo è pubblico. Per generare i nuovi valori senza che la password compaia a schermo o nella
+cronologia della shell:
+
+```sh
+read -rs PW && printf '%s' "$PW" | node tools/hash-password.mjs; unset PW
+```
+
+Copia le tre righe `PASSWORD_*` stampate al posto di quelle in `config.js`. Maiuscole e spazi ai lati
+vengono ignorati, sia qui sia nel form.
 
 ## Verifica sicurezza (Definition of done)
 

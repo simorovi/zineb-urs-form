@@ -41,6 +41,9 @@ manuale da parte sua.
   chiunque apra il sito pubblico su GitHub Pages
 - Usare solo la chiave `anon` pubblica, e affidarsi alla Row Level Security per limitare cosa può
   fare (solo insert, mai select/update/delete)
+- Non scrivere MAI la password di accesso in chiaro: né nei file del repo (codice, commenti, README),
+  né nei messaggi di commit, né negli output dei comandi. In `config.js` va solo il suo hash
+  (PBKDF2, generato con `tools/hash-password.mjs`)
 
 ## Definition of done
 - [ ] Le risposte inviate da Zineb compaiono nella tabella `urs_responses` su Supabase
