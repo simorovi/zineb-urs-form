@@ -14,6 +14,7 @@ Specifiche complete in [`CLAUDE.md`](CLAUDE.md).
 | `config.js` | URL Supabase, chiave **anon** pubblica, hash della password |
 | `tools/hash-password.mjs` | Genera l'hash per una nuova password |
 | `supabase/setup.sql` | **Unica fonte** dello schema: tabella `urs_responses`, permessi, RLS, vincoli, freno anti-flood |
+| `supabase/chiudi-porta.sql` | Toglie ad anon la possibilità di inserire (da usare dopo l'invio di Zineb) |
 | `supabase/test-sicurezza.sql` | Test dei permessi del ruolo anon (non lascia righe: finisce con `rollback`) |
 
 ## Setup (una volta)
@@ -35,6 +36,13 @@ Specifiche complete in [`CLAUDE.md`](CLAUDE.md).
 5. **Link per Zineb** — mandale in privato `https://simorovi.github.io/zineb-urs-form/#k=<password>`:
    la pagina entra da sola e il browser se lo ricorda. La parte dopo `#` non arriva a nessun server, ma
    il link contiene la password: non pubblicarlo da nessuna parte. Se lo perde, basta rimandarglielo.
+
+## Dopo che Zineb ha inviato: chiudere la porta
+
+Quando le risposte di Zineb sono in tabella, esegui `supabase/chiudi-porta.sql` nel *SQL Editor*: toglie al
+ruolo anon la policy e il permesso di inserimento, così nessuno può più scrivere nel database tramite il
+modulo pubblico (l'invio fallisce e il form propone la copia di sicurezza). Le risposte restano dove sono.
+Per riaprire, ad esempio se Zineb deve correggere qualcosa, basta rieseguire `supabase/setup.sql`.
 
 ## Cambiare la password
 
