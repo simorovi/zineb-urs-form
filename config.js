@@ -11,7 +11,7 @@ window.URS_CONFIG = {
   // Password di accesso, salvata SOLO come hash PBKDF2-SHA256 (mai in chiaro, in nessun file).
   // Non è sicurezza reale: il codice è pubblico e il controllo avviene nel browser. Serve solo a
   // scoraggiare i curiosi. Per cambiarla vedi README → "Cambiare la password".
-  PASSWORD_SALT: 'a914b231fbf9e5201e0270a596c3fdd8',
+PASSWORD_SALT: '52e172436ead1163d7a9e8395715e77a',
   PASSWORD_ITERAZIONI: 600000,
-  PASSWORD_HASH: 'f8c246ba4a5da67da32debbf118275a0ad31f5b27aca82f18607dfc15ff209a1',
+  PASSWORD_HASH: 'b7b51af942269088f59ea3592774e5da8a4168fa3ad5bee7a4534681d91c6785',
 };
