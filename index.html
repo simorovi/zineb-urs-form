@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <title>Il tuo nuovo sito — Domande</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <noscript>
+    <p class="noscript">Per compilare il modulo serve JavaScript attivo nel browser.</p>
+  </noscript>
+
+  <div id="gate" class="gate" hidden>
+    <form id="gate-form" class="gate-card" autocomplete="off">
+      <h1>Il tuo nuovo sito</h1>
+      <p>Inserisci la password che ti ha dato Simone.</p>
+      <label for="gate-password" class="visually-hidden">Password</label>
+      <input id="gate-password" type="password" autocapitalize="off" autocorrect="off"
+             spellcheck="false" enterkeyhint="go" placeholder="Password" required>
+      <button type="submit" class="btn btn-primario">Entra</button>
+      <p id="gate-errore" class="gate-errore" role="alert" hidden>
+        Password non corretta. Se non la ricordi, chiedila a Simone: te la rimanda subito.
+      </p>
+    </form>
+  </div>
+
+  <div id="app" hidden>
+    <header class="barra">
+      <div class="barra-interno">
+        <span class="barra-titolo">Il tuo nuovo sito</span>
+        <span id="stato-salvataggio" class="barra-stato" aria-live="polite"></span>
+      </div>
+      <div class="progresso" role="progressbar" aria-label="Domande con risposta"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="progresso-barra" class="progresso-barra"></div>
+      </div>
+    </header>
+
+    <main class="contenuto">
+      <section class="intro">
+        <h1>Ciao Zineb!</h1>
+        <p>
+          Queste domande servono a Simone per progettare il tuo nuovo sito. Rispondi con calma e con
+          parole tue: non ci sono risposte giuste o sbagliate, e puoi lasciare vuoto quello che non sai
+          ancora — ne parlerete insieme.
+        </p>
+        <p>
+          Le risposte si <strong>salvano da sole su questo dispositivo</strong> mentre scrivi: puoi
+          chiudere la pagina e riprendere quando vuoi, dallo stesso telefono o computer e con lo stesso
+          browser. Quando hai finito premi <strong>«Invia le risposte»</strong> in fondo alla pagina.
+          Puoi inviare anche più volte: vale l’ultima versione.
+        </p>
+        <p id="riepilogo" class="riepilogo"></p>
+      </section>
+
+      <form id="form" novalidate></form>
+
+      <section id="invio" class="invio">
+        <h2>Hai finito?</h2>
+        <p>Puoi inviare anche se hai lasciato qualche domanda vuota, e reinviare dopo aver completato.</p>
+        <button id="btn-invia" type="button" class="btn btn-primario btn-grande">Invia le risposte</button>
+        <div id="esito" class="esito" role="status" aria-live="polite" hidden></div>
+
+        <div class="backup">
+          <h3>Copia di sicurezza</h3>
+          <p>Se l’invio non funziona, puoi mandare le risposte a Simone in un altro modo.</p>
+          <div class="backup-azioni">
+            <button id="btn-condividi" type="button" class="btn" hidden>Condividi…</button>
+            <button id="btn-copia" type="button" class="btn">Copia le risposte</button>
+            <button id="btn-scarica" type="button" class="btn">Scarica un file</button>
+          </div>
+          <p id="esito-backup" class="esito-backup" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
