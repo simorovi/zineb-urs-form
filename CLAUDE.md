@@ -85,4 +85,8 @@ vince la sicurezza; se una scelta ha un impatto sulla sicurezza, va spiegata a S
 - [ ] Invio oltre 256 KB (testo non compresso) o non-oggetto rifiutato; oltre 20 invii/ora rifiutati
 - [ ] `setup.sql` rieseguibile senza errori
 - [ ] Security Advisor di Supabase senza errori
-- [ ] Nessuna chiave segreta né password in chiaro nella cronologia git
+- [ ] Nessuna chiave segreta né password ancora valida in chiaro nella cronologia git
+
+Eccezione accettata da Simone il 27/09/2026: la vecchia password temporanea del modulo compare in
+chiaro in 2 commit già pubblicati (`b81a7bb`, `5718c27`). È scaduta (non apre più il modulo) e la
+cronologia non viene riscritta: il repo è pubblico, quindi riscriverla non la eliminerebbe davvero.
