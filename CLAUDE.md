@@ -68,8 +68,11 @@ vince la sicurezza; se una scelta ha un impatto sulla sicurezza, va spiegata a S
 - Le chiavi segrete non si incollano mai in chat (né a Claude Code né altrove): le inserisce
   Simone direttamente nelle impostazioni dei servizi. Il codice le usa solo per nome. Se Simone
   incolla per errore una chiave segreta in chat, fermarsi e dirgli di rigenerarla.
-- Nemmeno la password del form passa dalla chat: Simone calcola l'hash con
-  `tools/genera-hash.html` (vedi punto 7) e passa solo i valori PASSWORD_*, che sono pubblici.
+- Nemmeno la password del form passa dalla chat: Simone apre `tools/genera-hash.html` nel browser,
+  inserisce la password, e passa in chat solo le tre righe PASSWORD_* che la pagina genera (valori
+  pubblici).
+- Non scrivere MAI la password del form in un comando, neanche per fare una prova: per le prove usa
+  una password finta creata al momento.
 - La password NON è una misura di sicurezza: il controllo avviene nel browser e si può aggirare.
   Non va mai presentata come tale né usata per proteggere dati. Deve essere lunga, perché l'hash è
   pubblico
@@ -84,6 +87,11 @@ vince la sicurezza; se una scelta ha un impatto sulla sicurezza, va spiegata a S
 - I workflow di GitHub Actions usano solo `pull_request`, MAI `pull_request_target`: il repo è
   pubblico, chiunque può aprire una PR, e `pull_request_target` eseguirebbe il suo codice con i
   permessi del repo. Permessi minimi (`contents: read`), azioni fissate a uno SHA completo
+- Qualsiasi modifica a `.gitleaks.toml`, `.github/workflows/`, `.githooks/` o
+  `tools/installa-gitleaks.sh` va segnalata esplicitamente a Simone nel resoconto della PR, spiegando
+  cosa cambia e perché. Non aggiungere né allargare MAI un'eccezione dello scanner senza chiederlo
+  prima. Il controllo automatico usa il `.gitleaks.toml` della PR stessa, quindi una PR che allenta
+  le regole passerebbe comunque il controllo.
 
 ### Barriere contro i segreti nel repo (il repo è PUBBLICO)
 Nessuna basta da sola, quindi sono in fila:
