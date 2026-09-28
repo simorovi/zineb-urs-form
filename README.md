@@ -16,6 +16,8 @@ Specifiche complete in [`CLAUDE.md`](CLAUDE.md).
 | `supabase/setup.sql` | **Unica fonte** dello schema: tabella `urs_responses`, permessi, RLS, vincoli, freno anti-flood |
 | `supabase/chiudi-porta.sql` | Toglie ad anon la possibilità di inserire (da usare dopo l'invio di Zineb) |
 | `supabase/test-sicurezza.sql` | Test dei permessi del ruolo anon (non lascia righe: finisce con `rollback`) |
+| `.gitleaks.toml` | Regole ed eccezioni dello scanner dei segreti (gitleaks) |
+| `tools/installa-gitleaks.sh` | Installa gitleaks in `.tools/`, nella versione fissata e verificata con lo SHA-256 ufficiale |
 
 ## Setup (una volta)
 
