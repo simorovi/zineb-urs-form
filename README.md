@@ -18,6 +18,21 @@ Specifiche complete in [`CLAUDE.md`](CLAUDE.md).
 | `supabase/test-sicurezza.sql` | Test dei permessi del ruolo anon (non lascia righe: finisce con `rollback`) |
 | `.gitleaks.toml` | Regole ed eccezioni dello scanner dei segreti (gitleaks) |
 | `tools/installa-gitleaks.sh` | Installa gitleaks in `.tools/`, nella versione fissata e verificata con lo SHA-256 ufficiale |
+| `.githooks/pre-commit` | Controllo dei segreti prima di ogni commit (blocca se gitleaks manca) |
+
+## Attivare il controllo dei segreti (in ogni clone, prima del primo commit)
+
+Il repo è pubblico: prima di ogni commit un hook controlla con gitleaks che nei file in stage non ci siano
+chiavi o token. Si attiva una volta per ogni clone (la configurazione è locale, non viaggia con il repo):
+
+```sh
+sh tools/installa-gitleaks.sh          # scarica gitleaks 8.30.1 in .tools/ e ne verifica lo SHA-256
+git config core.hooksPath .githooks    # attiva .githooks/pre-commit
+```
+
+Se gitleaks manca o non è nella versione fissata, il commit viene **bloccato** con un messaggio. Se trova
+un segreto, il commit viene bloccato e il valore nel messaggio è oscurato: toglilo dal file (e se era una
+chiave vera, rigenerala subito). **Mai** saltare il controllo con `git commit --no-verify`.
 
 ## Setup (una volta)
 
