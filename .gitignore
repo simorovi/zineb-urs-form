@@ -1,0 +1,9 @@
+# File di segreti locali (chiavi, token, password): esistono solo sul computer di chi lavora e non
+# vanno MAI nel repo, che è pubblico. Qualsiasi cosa finisca in un commit resta per sempre nella
+# cronologia, anche se poi viene cancellata.
+.env
+.env.*
+.dev.vars*
+
+# Binario di gitleaks installato da tools/installa-gitleaks.sh (codice esterno, non va versionato).
+.tools/

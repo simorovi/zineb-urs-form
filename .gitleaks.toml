@@ -1,0 +1,105 @@
+# Configurazione di gitleaks, lo scanner dei segreti usato dal pre-commit (.githooks/pre-commit) e dal
+# controllo su GitHub (.github/workflows/segreti.yml). Versione di gitleaks: 8.30.1.
+#
+# Il repo è PUBBLICO: qualsiasi segreto in un commit resta per sempre nella cronologia.
+# Regole: tutte quelle di serie di gitleaks + due su misura per Supabase (qui sotto).
+# Eccezioni: SOLO le quattro dichiarate in fondo, il più strette possibile. Nessuna eccezione nuova senza
+# l'accordo di Simone. I commenti "gitleaks:allow" e i file .gitleaksignore sono ignorati apposta
+# (vedi i comandi nel pre-commit e nel workflow).
+
+title = "zineb-urs-form — segreti"
+
+[extend]
+useDefault = true
+
+# ------------------------------------------------------------------------------------------------
+# Regole su misura
+# ------------------------------------------------------------------------------------------------
+
+# Le regole di serie di gitleaks 8.30.1 non conoscono le chiavi Supabase del nuovo formato.
+[[rules]]
+id = "supabase-chiave-segreta"
+description = "Chiave segreta di Supabase (sb_secret_…): dà accesso completo al database"
+regex = '''\bsb_secret_[A-Za-z0-9_-]{16,}'''
+keywords = ["sb_secret_"]
+
+# JWT legacy "service_role" di Supabase. La regola di serie "jwt" trova già tutti i JWT, ma su
+# config.js ha un'eccezione per la chiave anon (eccezione a): questa regola invece NON ha eccezioni,
+# così una service_role resta bloccata anche lì.
+# Il payload del JWT è in base64url: "service_role" può comparire in tre forme, a seconda di dove cade
+# rispetto ai gruppi di 3 byte:  c2VydmljZV9yb2xl | NlcnZpY2Vfcm9s | zZXJ2aWNlX3Jv
+[[rules]]
+id = "supabase-jwt-service-role"
+description = "JWT service_role di Supabase (chiave legacy con accesso completo al database)"
+regex = '''\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]*(?:c2VydmljZV9yb2xl|NlcnZpY2Vfcm9s|zZXJ2aWNlX3Jv)[A-Za-z0-9_-]*\.[A-Za-z0-9_-]{10,}'''
+keywords = ["eyj"]
+
+# I token di accesso di GitHub (ghp_, github_pat_, gho_, ghu_, ghs_, ghr_) sono coperti dalle regole di
+# serie: github-pat, github-fine-grained-pat, github-oauth, github-app-token, github-refresh-token.
+
+# ------------------------------------------------------------------------------------------------
+# Eccezioni (SOLO queste quattro)
+# ------------------------------------------------------------------------------------------------
+
+# a) La chiave PUBBLICA di Supabase in config.js. È pubblica per natura (il form la usa dal browser)
+#    e tutta la protezione sta nel database. Vale solo:
+#    - nel file config.js alla radice del repo,
+#    - sulla riga SUPABASE_ANON_KEY, con un valore sb_publishable_… oppure un JWT il cui payload
+#      contiene "role":"anon" (tre forme base64url: InJvbGUiOiJhbm9u | Jyb2xlIjoiYW5v | icm9sZSI6ImFub24i),
+#    - solo per le regole generiche (jwt, generic-api-key): le regole Supabase qui sopra restano attive.
+[[allowlists]]
+description = "a) chiave pubblica Supabase (publishable o anon) in config.js"
+targetRules = ["jwt", "generic-api-key"]
+condition = "AND"
+paths = ['''^(\./)?config\.js$''']
+regexTarget = "line"
+regexes = [
+  '''^\s*SUPABASE_ANON_KEY:\s*'(?:sb_publishable_[A-Za-z0-9_-]{16,}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*(?:InJvbGUiOiJhbm9u|Jyb2xlIjoiYW5v|icm9sZSI6ImFub24i)[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+)',\s*$''',
+]
+
+# b) Sale e hash PBKDF2 della password del form in config.js: sono pubblici per scelta (il controllo
+#    della password avviene nel browser). Vale solo nel file config.js, sulle righe PASSWORD_SALT
+#    (32 caratteri esadecimali) e PASSWORD_HASH (64 caratteri esadecimali), per la regola generica.
+[[allowlists]]
+description = "b) PASSWORD_SALT e PASSWORD_HASH (PBKDF2) in config.js"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^(\./)?config\.js$''']
+regexTarget = "line"
+regexes = [
+  '''^\s*PASSWORD_SALT:\s*'[0-9a-f]{32}',\s*$''',
+  '''^\s*PASSWORD_HASH:\s*'[0-9a-f]{64}',\s*$''',
+]
+
+# c) Vecchia password temporanea del form, scaduta, nei due commit già pubblicati dove compariva
+#    (eccezione accettata da Simone il 27/09/2026, documentata in CLAUDE.md). Vale solo per quei due
+#    commit (SHA completo), solo per i file dove compariva, config.js e README.md, e solo per la regola
+#    generic-api-key (l'unica che scatta lì: segnala il vecchio hash SHA-256 in config.js di b81a7bb).
+#    La scansione della cronologia resta attiva su tutto il resto.
+#    ATTENZIONE: targetRules è indispensabile. Senza, gitleaks tratta l'eccezione come globale e salta
+#    config.js e README.md PER INTERO in ogni commit e nei file attuali, ignorando la condizione sui
+#    commit (verificato con gitleaks 8.30.1: "skipping file: global allowlist").
+[[allowlists]]
+description = "c) vecchia password temporanea scaduta (commit b81a7bb e 5718c27)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+commits = [
+  "b81a7bbdce3c49006676eabc522abf7ade3af981",
+  "5718c2712d20e1ed8dcadfec66b54fbae2dcc47c",
+]
+paths = ['''^(config\.js|README\.md)$''']
+
+# d) Falso positivo, nome di una voce di localStorage, non un segreto: nel commit b81a7bb app.js
+#    conteneva `const KEY_BOZZA = 'urs-zineb-bozza-v1';` (il nome della voce in cui il browser salva la
+#    bozza), che la regola generic-api-key scambia per una chiave per via di "KEY" nel nome. Nei file
+#    attuali la costante si chiama VOCE_BOZZA e non viene più segnalata; resta solo la cronologia.
+#    Vale solo per quel commit (SHA completo), solo per app.js, solo per quella riga esatta e solo per
+#    generic-api-key (eccezione accettata da Simone il 28/09/2026, documentata in CLAUDE.md).
+[[allowlists]]
+description = "d) falso positivo: nome della voce di localStorage della bozza (commit b81a7bb)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+commits = ["b81a7bbdce3c49006676eabc522abf7ade3af981"]
+paths = ['''^app\.js$''']
+regexTarget = "line"
+regexes = ['''^\s*const KEY_BOZZA = 'urs-zineb-bozza-v1';\s*$''']

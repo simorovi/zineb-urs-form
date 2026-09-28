@@ -12,10 +12,34 @@ Specifiche complete in [`CLAUDE.md`](CLAUDE.md).
 | `index.html`, `styles.css`, `app.js` | Il modulo |
 | `questions.js` | Le domande (una sezione per ogni capitolo dell'URS) |
 | `config.js` | URL Supabase, chiave **anon** pubblica, hash della password |
-| `tools/hash-password.mjs` | Genera l'hash per una nuova password |
+| `tools/genera-hash.html` (+ `.js`, `.css`) | **Modo standard** per calcolare l'hash di una nuova password, nel browser |
+| `tools/hash-password.mjs` | Alternativa da terminale (Node) alla pagina qui sopra |
 | `supabase/setup.sql` | **Unica fonte** dello schema: tabella `urs_responses`, permessi, RLS, vincoli, freno anti-flood |
 | `supabase/chiudi-porta.sql` | Toglie ad anon la possibilità di inserire (da usare dopo l'invio di Zineb) |
 | `supabase/test-sicurezza.sql` | Test dei permessi del ruolo anon (non lascia righe: finisce con `rollback`) |
+| `.gitleaks.toml` | Regole ed eccezioni dello scanner dei segreti (gitleaks) |
+| `tools/installa-gitleaks.sh` | Installa gitleaks in `.tools/`, nella versione fissata e verificata con lo SHA-256 ufficiale |
+| `.githooks/pre-commit` | Controllo dei segreti prima di ogni commit (blocca se gitleaks manca) |
+| `.github/workflows/segreti.yml` | Controllo dei segreti su GitHub a ogni push e PR (file e cronologia) |
+| `.github/dependabot.yml` | Aggiorna gli SHA delle azioni usate nei workflow |
+
+## Attivare il controllo dei segreti (in ogni clone, prima del primo commit)
+
+Il repo è pubblico: prima di ogni commit un hook controlla con gitleaks che nei file in stage non ci siano
+chiavi o token. Si attiva una volta per ogni clone (la configurazione è locale, non viaggia con il repo):
+
+```sh
+sh tools/installa-gitleaks.sh          # scarica gitleaks 8.30.1 in .tools/ e ne verifica lo SHA-256
+git config core.hooksPath .githooks    # attiva .githooks/pre-commit
+```
+
+Se gitleaks manca o non è nella versione fissata, il commit viene **bloccato** con un messaggio. Se trova
+un segreto, il commit viene bloccato e il valore nel messaggio è oscurato: toglilo dal file (e se era una
+chiave vera, rigenerala subito). **Mai** saltare il controllo con `git commit --no-verify`.
+
+Lo stesso controllo gira anche su GitHub (*Actions → Controllo segreti*) a ogni push e a ogni PR, su tutti i
+file e su tutta la cronologia: se trova qualcosa la PR mostra una ✗ rossa. Vale anche per chi non ha
+attivato l'hook.
 
 ## Setup (una volta)
 
@@ -47,15 +71,22 @@ Per riaprire, ad esempio se Zineb deve correggere qualcosa, basta rieseguire `su
 ## Cambiare la password
 
 La password non va **mai** scritta in chiaro nel repo (né in file, né in commenti, né nei messaggi di
-commit): il repo è pubblico. Per generare i nuovi valori senza che la password compaia a schermo o nella
-cronologia della shell:
+commit), e non passa dalla chat: il repo è pubblico. Il modo standard:
+
+1. apri `tools/genera-hash.html`, dal sito (`https://simorovi.github.io/zineb-urs-form/tools/genera-hash.html`)
+   o come file locale;
+2. scrivi la nuova password (lunga, meglio una frase di più parole) e premi *Calcola*;
+3. copia le tre righe `PASSWORD_*` al posto di quelle in `config.js`.
+
+L'hash si calcola solo nel browser: la pagina non fa richieste di rete (lo impone la sua Content Security
+Policy) e non salva nulla. Le righe `PASSWORD_*` sono pubbliche per scelta: si possono passare a Claude Code
+o mettere in un commit. Maiuscole e spazi ai lati vengono ignorati, sia qui sia nel form.
+
+In alternativa, da terminale (la password non compare a schermo né nella cronologia della shell):
 
 ```sh
 read -rs PW && printf '%s' "$PW" | node tools/hash-password.mjs; unset PW
 ```
-
-Copia le tre righe `PASSWORD_*` stampate al posto di quelle in `config.js`. Maiuscole e spazi ai lati
-vengono ignorati, sia qui sia nel form.
 
 ## Verifica sicurezza (Definition of done)
 

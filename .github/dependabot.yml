@@ -1,0 +1,10 @@
+# Dependabot tiene aggiornati gli SHA delle azioni usate nei workflow (fissate a un commit preciso).
+# Solo l'ecosistema github-actions: il repo non ha altre dipendenze.
+# Nota: la versione di gitleaks è scaricata a mano (vedi .github/workflows/segreti.yml) e Dependabot
+# non la vede: va aggiornata insieme in workflow, tools/installa-gitleaks.sh e .githooks/pre-commit.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

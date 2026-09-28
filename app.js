@@ -6,9 +6,9 @@
   const VERSIONE = window.URS_VERSIONE || '';
   const DOMANDE = SEZIONI.flatMap((s) => s.domande);
 
-  const KEY_BOZZA = 'urs-zineb-bozza-v1';
-  const KEY_ACCESSO = 'urs-zineb-accesso';
-  const KEY_ULTIMO_INVIO = 'urs-zineb-ultimo-invio';
+  const VOCE_BOZZA = 'urs-zineb-bozza-v1';
+  const VOCE_INGRESSO = 'urs-zineb-accesso';
+  const VOCE_ULTIMO_INVIO = 'urs-zineb-ultimo-invio';
   const TIMEOUT_INVIO_MS = 20000;
 
   const $ = (sel) => document.querySelector(sel);
@@ -66,7 +66,7 @@
   async function avvia() {
     const atteso = (CFG.PASSWORD_HASH || '').toLowerCase();
     if (!atteso || !(window.crypto && crypto.subtle)) return mostraApp();
-    if (store.get(KEY_ACCESSO) === atteso) return mostraApp();
+    if (store.get(VOCE_INGRESSO) === atteso) return mostraApp();
 
     // Link con la password già inclusa: …/#k=password (la parte dopo # non arriva mai al server).
     const m = location.hash.match(/[#&]k=([^&]*)/);
@@ -75,7 +75,7 @@
       let pw = '';
       try { pw = decodeURIComponent(m[1]); } catch (e) { /* link rovinato: chiediamo la password */ }
       if (pw && (await hashPassword(normalizza(pw))) === atteso) {
-        store.set(KEY_ACCESSO, atteso);
+        store.set(VOCE_INGRESSO, atteso);
         return mostraApp();
       }
     }
@@ -94,7 +94,7 @@
       btn.disabled = false;
       btn.textContent = 'Entra';
       if (ok) {
-        store.set(KEY_ACCESSO, atteso);
+        store.set(VOCE_INGRESSO, atteso);
         $('#gate').hidden = true;
         mostraApp();
       } else {
@@ -281,7 +281,7 @@
     clearTimeout(timerSalvataggio);
     timerSalvataggio = null;
     const ok = store.set(
-      KEY_BOZZA,
+      VOCE_BOZZA,
       JSON.stringify({ risposte: raccogli(), salvatoIl: new Date().toISOString() })
     );
     $('#stato-salvataggio').textContent = ok
@@ -297,7 +297,7 @@
   }
 
   function aggiornaStatoInvio(r) {
-    const ultimo = store.getJSON(KEY_ULTIMO_INVIO);
+    const ultimo = store.getJSON(VOCE_ULTIMO_INVIO);
     const esito = $('#esito');
     if (!ultimo || esito.dataset.fisso) return;
     const modificato = JSON.stringify(ultimo.risposte) !== JSON.stringify(r);
@@ -415,7 +415,7 @@
           },
         })
       );
-      store.set(KEY_ULTIMO_INVIO, JSON.stringify({ risposte: r, inviatoIl: new Date().toISOString() }));
+      store.set(VOCE_ULTIMO_INVIO, JSON.stringify({ risposte: r, inviatoIl: new Date().toISOString() }));
       mostraEsito(
         'ok',
         'Risposte inviate, grazie!',
@@ -523,7 +523,7 @@
   function mostraApp() {
     costruisciModulo();
 
-    const bozza = store.getJSON(KEY_BOZZA);
+    const bozza = store.getJSON(VOCE_BOZZA);
     if (bozza && bozza.risposte) {
       ripristina(bozza.risposte);
       $('#stato-salvataggio').textContent = `Bozza ripresa · ${dataOra(new Date(bozza.salvatoIl))}`;

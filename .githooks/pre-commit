@@ -1,0 +1,56 @@
+#!/bin/sh
+# Controllo dei segreti prima di ogni commit (il repo è PUBBLICO).
+# Attivazione, una volta per ogni clone:  git config core.hooksPath .githooks
+# Installazione dello scanner:            sh tools/installa-gitleaks.sh
+#
+# Se lo scanner manca o non è nella versione fissata, il commit viene BLOCCATO: mai in silenzio.
+# Non saltare MAI questo controllo con --no-verify.
+set -u
+
+VERSIONE_ATTESA=8.30.1
+
+radice=$(git rev-parse --show-toplevel) || exit 1
+cd "$radice" || exit 1
+
+blocca() {
+  echo "" >&2
+  echo "✗ COMMIT BLOCCATO — controllo dei segreti" >&2
+  echo "$1" >&2
+  echo "" >&2
+  exit 1
+}
+
+if [ -x "$radice/.tools/gitleaks" ]; then
+  gitleaks="$radice/.tools/gitleaks"
+elif command -v gitleaks >/dev/null 2>&1; then
+  gitleaks=$(command -v gitleaks)
+else
+  blocca "gitleaks non è installato, quindi non posso controllare che nel commit non ci siano segreti.
+Installalo con:  sh tools/installa-gitleaks.sh"
+fi
+
+versione=$("$gitleaks" version 2>/dev/null)
+if [ "$versione" != "$VERSIONE_ATTESA" ]; then
+  blocca "gitleaks è nella versione '$versione', ma serve la $VERSIONE_ATTESA (quella verificata).
+Installa quella giusta con:  sh tools/installa-gitleaks.sh"
+fi
+
+# File in stage. --ignore-gitleaks-allow e un .gitleaksignore vuoto: valgono SOLO le eccezioni
+# dichiarate in .gitleaks.toml, non commenti "gitleaks:allow" o file di eccezioni aggiunti altrove.
+nessuna_eccezione=$(mktemp -d) || exit 1
+"$gitleaks" git --pre-commit --staged --redact --no-banner --verbose \
+  --config "$radice/.gitleaks.toml" --ignore-gitleaks-allow \
+  --gitleaks-ignore-path "$nessuna_eccezione" "$radice"
+esito=$?
+rmdir "$nessuna_eccezione"
+
+if [ "$esito" -ne 0 ]; then
+  blocca "Nei file in stage c'è qualcosa che assomiglia a un segreto (vedi sopra: il valore è oscurato).
+Cosa fare:
+  1. toglilo dal file e rifai 'git add' (se è una chiave, va nelle impostazioni del servizio, non nel codice);
+  2. se era una chiave VERA, consideralo compromesso: rigenerala subito nel servizio e avvisa Simone;
+  3. se sei sicuro che sia un falso positivo, NON usare --no-verify: parlane con Simone, che decide
+     se aggiungere un'eccezione in .gitleaks.toml."
+fi
+
+exit 0
