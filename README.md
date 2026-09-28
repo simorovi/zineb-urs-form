@@ -19,6 +19,8 @@ Specifiche complete in [`CLAUDE.md`](CLAUDE.md).
 | `.gitleaks.toml` | Regole ed eccezioni dello scanner dei segreti (gitleaks) |
 | `tools/installa-gitleaks.sh` | Installa gitleaks in `.tools/`, nella versione fissata e verificata con lo SHA-256 ufficiale |
 | `.githooks/pre-commit` | Controllo dei segreti prima di ogni commit (blocca se gitleaks manca) |
+| `.github/workflows/segreti.yml` | Controllo dei segreti su GitHub a ogni push e PR (file e cronologia) |
+| `.github/dependabot.yml` | Aggiorna gli SHA delle azioni usate nei workflow |
 
 ## Attivare il controllo dei segreti (in ogni clone, prima del primo commit)
 
@@ -33,6 +35,10 @@ git config core.hooksPath .githooks    # attiva .githooks/pre-commit
 Se gitleaks manca o non è nella versione fissata, il commit viene **bloccato** con un messaggio. Se trova
 un segreto, il commit viene bloccato e il valore nel messaggio è oscurato: toglilo dal file (e se era una
 chiave vera, rigenerala subito). **Mai** saltare il controllo con `git commit --no-verify`.
+
+Lo stesso controllo gira anche su GitHub (*Actions → Controllo segreti*) a ogni push e a ogni PR, su tutti i
+file e su tutta la cronologia: se trova qualcosa la PR mostra una ✗ rossa. Vale anche per chi non ha
+attivato l'hook.
 
 ## Setup (una volta)
 
