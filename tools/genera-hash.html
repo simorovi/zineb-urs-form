@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <!-- Nessuna rete, nessuno script o stile esterno: lo impone il browser. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; img-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <title>Genera l'hash della password</title>
+  <link rel="stylesheet" href="genera-hash.css">
+</head>
+<body>
+  <main>
+    <h1>Hash della password del modulo</h1>
+    <p>
+      Scrivi qui la nuova password: l'hash si calcola <strong>solo in questo browser</strong>.
+      La pagina non fa richieste di rete e non salva nulla. Copia le tre righe risultanti al posto di
+      quelle in <code>config.js</code>: sono pubbliche per scelta, la password no.
+    </p>
+    <form id="modulo" autocomplete="off">
+      <label for="password">Nuova password (lunga: meglio una frase di più parole)</label>
+      <input id="password" type="password" autocomplete="off" autocapitalize="off"
+             autocorrect="off" spellcheck="false" required minlength="1">
+      <p class="nota">Maiuscole e spazi all'inizio e alla fine vengono ignorati, come nel modulo.</p>
+      <button type="submit" id="calcola">Calcola</button>
+    </form>
+    <p id="stato" role="status" aria-live="polite"></p>
+    <div id="risultato" hidden>
+      <label for="righe">Righe per <code>config.js</code></label>
+      <textarea id="righe" rows="3" readonly spellcheck="false"></textarea>
+      <button type="button" id="copia">Copia</button>
+      <p class="nota">Ogni calcolo usa un sale nuovo, quindi l'hash cambia anche con la stessa password:
+        è normale.</p>
+    </div>
+  </main>
+  <script src="genera-hash.js"></script>
+</body>
+</html>

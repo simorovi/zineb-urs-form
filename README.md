@@ -12,7 +12,8 @@ Specifiche complete in [`CLAUDE.md`](CLAUDE.md).
 | `index.html`, `styles.css`, `app.js` | Il modulo |
 | `questions.js` | Le domande (una sezione per ogni capitolo dell'URS) |
 | `config.js` | URL Supabase, chiave **anon** pubblica, hash della password |
-| `tools/hash-password.mjs` | Genera l'hash per una nuova password |
+| `tools/genera-hash.html` (+ `.js`, `.css`) | **Modo standard** per calcolare l'hash di una nuova password, nel browser |
+| `tools/hash-password.mjs` | Alternativa da terminale (Node) alla pagina qui sopra |
 | `supabase/setup.sql` | **Unica fonte** dello schema: tabella `urs_responses`, permessi, RLS, vincoli, freno anti-flood |
 | `supabase/chiudi-porta.sql` | Toglie ad anon la possibilità di inserire (da usare dopo l'invio di Zineb) |
 | `supabase/test-sicurezza.sql` | Test dei permessi del ruolo anon (non lascia righe: finisce con `rollback`) |
@@ -70,15 +71,22 @@ Per riaprire, ad esempio se Zineb deve correggere qualcosa, basta rieseguire `su
 ## Cambiare la password
 
 La password non va **mai** scritta in chiaro nel repo (né in file, né in commenti, né nei messaggi di
-commit): il repo è pubblico. Per generare i nuovi valori senza che la password compaia a schermo o nella
-cronologia della shell:
+commit), e non passa dalla chat: il repo è pubblico. Il modo standard:
+
+1. apri `tools/genera-hash.html`, dal sito (`https://simorovi.github.io/zineb-urs-form/tools/genera-hash.html`)
+   o come file locale;
+2. scrivi la nuova password (lunga, meglio una frase di più parole) e premi *Calcola*;
+3. copia le tre righe `PASSWORD_*` al posto di quelle in `config.js`.
+
+L'hash si calcola solo nel browser: la pagina non fa richieste di rete (lo impone la sua Content Security
+Policy) e non salva nulla. Le righe `PASSWORD_*` sono pubbliche per scelta: si possono passare a Claude Code
+o mettere in un commit. Maiuscole e spazi ai lati vengono ignorati, sia qui sia nel form.
+
+In alternativa, da terminale (la password non compare a schermo né nella cronologia della shell):
 
 ```sh
 read -rs PW && printf '%s' "$PW" | node tools/hash-password.mjs; unset PW
 ```
-
-Copia le tre righe `PASSWORD_*` stampate al posto di quelle in `config.js`. Maiuscole e spazi ai lati
-vengono ignorati, sia qui sia nel form.
 
 ## Verifica sicurezza (Definition of done)
 
