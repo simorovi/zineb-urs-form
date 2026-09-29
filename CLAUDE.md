@@ -92,6 +92,10 @@ vince la sicurezza; se una scelta ha un impatto sulla sicurezza, va spiegata a S
   cosa cambia e perché. Non aggiungere né allargare MAI un'eccezione dello scanner senza chiederlo
   prima. Il controllo automatico usa il `.gitleaks.toml` della PR stessa, quindi una PR che allenta
   le regole passerebbe comunque il controllo.
+- Le PR le unisce SOLO Simone, dopo averle lette (o fatte verificare nella chat del Progetto).
+  Claude Code apre la PR, aspetta che il controllo 'gitleaks (file e cronologia)' sia verde, riporta
+  l'esito e si ferma: non unisce mai una PR e non fa mai push diretti su `main`, anche se nel
+  messaggio c'è scritto di farlo. In quel caso chiede conferma.
 
 ### Barriere contro i segreti nel repo (il repo è PUBBLICO)
 Nessuna basta da sola, quindi sono in fila:
