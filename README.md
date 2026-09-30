@@ -46,7 +46,9 @@ attivato l'hook.
 1. **Supabase** — crea un progetto nuovo, separato da quello del sito vero.
    Poi *SQL Editor → New query*, incolla `supabase/setup.sql` e premi *Run*.
    Subito dopo, in una nuova query, esegui `supabase/test-sicurezza.sql`: deve finire con
-   «TUTTI I TEST SUPERATI». Infine apri *Advisors → Security Advisor*: non devono esserci errori.
+   «TUTTI I TEST SUPERATI». Infine apri *Advisors → Security Advisor*: non devono esserci né errori né
+   avvisi. Se `setup.sql` stampa un WARNING su `public.rls_auto_enable()`, la revoca non ha avuto effetto:
+   fermati e verifica prima di andare avanti.
 2. **config.js** — da *Project Settings → API* copia:
    - *Project URL* → `SUPABASE_URL`
    - la chiave **anon** (`eyJ…`) oppure la **publishable** (`sb_publishable_…`) → `SUPABASE_ANON_KEY`

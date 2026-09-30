@@ -41,12 +41,19 @@ alter table public.urs_responses enable row level security;
 revoke all on table public.urs_responses from anon, authenticated;
 grant insert (risposte) on table public.urs_responses to anon;
 
+-- La policy ripete gli stessi controlli dei vincoli qui sopra (oggetto JSON, massimo 256 KB di testo).
+-- Non è un doppione: è difesa in profondità. Se un giorno un vincolo venisse tolto o cambiato per
+-- sbaglio, la policy continuerebbe a rifiutare gli invii non validi dal ruolo anon, e viceversa.
+-- (Con `with check (true)` il Security Advisor segnala "RLS Policy Always True".)
 drop policy if exists "anon puo solo inserire" on public.urs_responses;
 create policy "anon puo solo inserire"
   on public.urs_responses
   for insert
   to anon
-  with check (true);
+  with check (
+    jsonb_typeof(risposte) = 'object'
+    and octet_length(risposte::text) <= 262144
+  );
 
 -- Volutamente NESSUNA policy di select/update/delete: le risposte si leggono solo dalla dashboard
 -- (Table Editor), che usa un ruolo privilegiato e non passa dalle policy.
@@ -93,3 +100,31 @@ create trigger urs_freno_invii
   before insert on public.urs_responses
   for each row
   execute function public.urs_freno_invii();
+
+-- public.rls_auto_enable(): NON è nostra. La crea Supabase quando alla creazione del progetto si attiva
+-- "Enable automatic RLS": è la funzione dell'event trigger `ensure_rls`, che attiva la Row Level
+-- Security su ogni nuova tabella creata nello schema public. La teniamo (è una protezione utile), ma è
+-- `security definer` e, con i permessi predefiniti di Supabase, anon e authenticated potrebbero
+-- eseguirla direttamente (il Security Advisor lo segnala due volte). Revochiamo quindi EXECUTE a
+-- public, anon e authenticated. L'event trigger continua a funzionare, perché Postgres non controlla
+-- il permesso EXECUTE quando un event trigger chiama la sua funzione (verificato da test-sicurezza.sql).
+-- Se la funzione non esiste (progetto creato senza quell'opzione) non si fa nulla: il file resta
+-- rieseguibile ovunque.
+do $$
+begin
+  if pg_catalog.to_regprocedure('public.rls_auto_enable()') is null then
+    raise notice 'public.rls_auto_enable() non esiste in questo progetto: nulla da revocare.';
+    return;
+  end if;
+
+  revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+
+  -- Se la funzione appartiene a un altro ruolo, REVOKE non toglie nulla e dà solo un avviso di
+  -- Postgres: lo rendiamo esplicito. test-sicurezza.sql, in quel caso, fallisce.
+  if pg_catalog.has_function_privilege('anon', 'public.rls_auto_enable()', 'execute')
+     or pg_catalog.has_function_privilege('authenticated', 'public.rls_auto_enable()', 'execute') then
+    raise warning 'ATTENZIONE: anon o authenticated possono ancora eseguire public.rls_auto_enable() '
+                  '(la funzione appartiene probabilmente a un altro ruolo). Avvisa Simone.';
+  end if;
+end;
+$$;
