@@ -33,12 +33,18 @@ Unica fonte: `supabase/setup.sql` (rieseguibile senza errori né perdita di dati
   Nessun altro permesso: lettura, modifica e cancellazione con la chiave pubblica falliscono con
   "permission denied"
 - Row Level Security: ABILITATA
-  - Policy "anon puo solo inserire" (INSERT, ruolo `anon`)
+  - Policy "anon puo solo inserire" (INSERT, ruolo `anon`) con `with check (jsonb_typeof(risposte) =
+    'object' and octet_length(risposte::text) <= 262144)`: gli stessi controlli dei vincoli, ripetuti
+    apposta (difesa in profondità; `with check (true)` fa scattare l'avviso "RLS Policy Always True")
   - Nessuna policy di select/update/delete: solo Simone legge le risposte, dalla dashboard Supabase
 - Anti-flood: trigger BEFORE INSERT `urs_freno_invii` → funzione `public.urs_freno_invii()`
   (`security definer`, `search_path = ''`, nomi qualificati, lock per gli invii simultanei,
   `execute` revocato a public/anon/authenticated). Rifiuta l'invio se nell'ultima ora ci sono già
   20 righe o se la tabella ne ha già 200 in totale
+- `public.rls_auto_enable()`: NON è nostra, la crea Supabase con l'opzione "Enable automatic RLS"
+  (event trigger `ensure_rls`, attiva la RLS su ogni nuova tabella di `public`). Si tiene, ma
+  `setup.sql` revoca EXECUTE a public/anon/authenticated se la funzione esiste; l'event trigger
+  funziona comunque. Se `setup.sql` stampa un WARNING su questa funzione, la revoca non ha avuto effetto
 - Chiusura: `supabase/chiudi-porta.sql` (da eseguire dopo che Zineb ha inviato) toglie la policy e il
   permesso di inserimento ad anon; per riaprire si riesegue `setup.sql`
 
