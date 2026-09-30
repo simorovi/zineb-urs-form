@@ -44,7 +44,9 @@ Unica fonte: `supabase/setup.sql` (rieseguibile senza errori né perdita di dati
 - `public.rls_auto_enable()`: NON è nostra, la crea Supabase con l'opzione "Enable automatic RLS"
   (event trigger `ensure_rls`, attiva la RLS su ogni nuova tabella di `public`). Si tiene, ma
   `setup.sql` revoca EXECUTE a public/anon/authenticated se la funzione esiste; l'event trigger
-  funziona comunque. Se `setup.sql` stampa un WARNING su questa funzione, la revoca non ha avuto effetto
+  funziona comunque. Che la revoca abbia avuto effetto lo verifica `test-sicurezza.sql` (errore rosso
+  «TEST FALLITO» se no): l'editor SQL di Supabase non mostra i WARNING di `setup.sql`, e per il test
+  mostra «Success. No rows returned.» anche quando passa, perché l'ultimo comando è il `rollback`
 - Chiusura: `supabase/chiudi-porta.sql` (da eseguire dopo che Zineb ha inviato) toglie la policy e il
   permesso di inserimento ad anon; per riaprire si riesegue `setup.sql`
 

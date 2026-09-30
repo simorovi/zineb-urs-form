@@ -120,7 +120,8 @@ begin
   revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
 
   -- Se la funzione appartiene a un altro ruolo, REVOKE non toglie nulla e dà solo un avviso di
-  -- Postgres: lo rendiamo esplicito. test-sicurezza.sql, in quel caso, fallisce.
+  -- Postgres: lo rendiamo esplicito. Attenzione: l'editor SQL di Supabase non mostra gli avvisi, quindi
+  -- la verifica affidabile è test-sicurezza.sql, che in quel caso fallisce con un errore.
   if pg_catalog.has_function_privilege('anon', 'public.rls_auto_enable()', 'execute')
      or pg_catalog.has_function_privilege('authenticated', 'public.rls_auto_enable()', 'execute') then
     raise warning 'ATTENZIONE: anon o authenticated possono ancora eseguire public.rls_auto_enable() '
