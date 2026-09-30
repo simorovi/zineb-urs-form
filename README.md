@@ -45,10 +45,13 @@ attivato l'hook.
 
 1. **Supabase** — crea un progetto nuovo, separato da quello del sito vero.
    Poi *SQL Editor → New query*, incolla `supabase/setup.sql` e premi *Run*.
-   Subito dopo, in una nuova query, esegui `supabase/test-sicurezza.sql`: deve finire con
-   «TUTTI I TEST SUPERATI». Infine apri *Advisors → Security Advisor*: non devono esserci né errori né
-   avvisi. Se `setup.sql` stampa un WARNING su `public.rls_auto_enable()`, la revoca non ha avuto effetto:
-   fermati e verifica prima di andare avanti.
+   Subito dopo, in una nuova query, esegui `supabase/test-sicurezza.sql`: è questa la prova affidabile.
+   Se un controllo non passa, l'editor mostra un errore rosso «TEST FALLITO: …» e ci si ferma lì.
+   Se invece passano tutti, è normale vedere solo «Success. No rows returned.»: l'editor SQL di Supabase
+   mostra il risultato dell'ultimo comando, che è il `rollback` finale (la riga «TUTTI I TEST SUPERATI» si
+   vede solo con client come `psql`). L'editor non mostra nemmeno gli avvisi (WARNING) di `setup.sql`:
+   per questo la revoca su `public.rls_auto_enable()` si verifica con il test, non guardando `setup.sql`.
+   Infine apri *Advisors → Security Advisor*: non devono esserci né errori né avvisi.
 2. **config.js** — da *Project Settings → API* copia:
    - *Project URL* → `SUPABASE_URL`
    - la chiave **anon** (`eyJ…`) oppure la **publishable** (`sb_publishable_…`) → `SUPABASE_ANON_KEY`

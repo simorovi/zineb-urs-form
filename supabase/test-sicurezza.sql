@@ -2,8 +2,10 @@
 -- setup.sql gli concede. Da eseguire dopo setup.sql, in: Dashboard Supabase → SQL Editor → Run.
 --
 -- Tutto avviene in una transazione annullata alla fine (rollback): non lascia righe nella tabella.
--- Se un controllo fallisce, lo script si ferma con un errore "TEST FALLITO: …".
--- Se arriva in fondo, l'ultima riga del risultato è "TUTTI I TEST SUPERATI".
+-- Se un controllo fallisce, lo script si ferma con un errore "TEST FALLITO: …" (in rosso nell'editor).
+-- Se passano tutti, nell'editor SQL di Supabase compare solo "Success. No rows returned.": l'editor
+-- mostra il risultato dell'ultimo comando, cioè il rollback. La riga "TUTTI I TEST SUPERATI" e i
+-- messaggi "OK: …" si vedono con client come psql.
 --
 -- Nota: i test sul freno anti-flood contano anche le righe già presenti. Eseguilo prima di mandare
 -- il link a Zineb, o comunque quando nell'ultima ora non ci sono stati invii veri.
