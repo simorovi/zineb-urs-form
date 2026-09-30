@@ -7,6 +7,9 @@
 --
 -- Nota: i test sul freno anti-flood contano anche le righe già presenti. Eseguilo prima di mandare
 -- il link a Zineb, o comunque quando nell'ultima ora non ci sono stati invii veri.
+-- Nota: per provare la policy da sola, la sezione 2 toglie per un istante i vincoli della tabella
+-- (dentro un savepoint, subito annullato) e la sezione 4 crea una tabella di prova: tutto viene
+-- annullato. Per quegli istanti la tabella resta bloccata, quindi non eseguirlo mentre Zineb invia.
 
 begin;
 
@@ -58,11 +61,17 @@ begin
     raise notice 'OK: invio con `creato_il` scelto a mano rifiutato';
   end;
 
+  -- Invii non validi: li rifiutano sia la policy sia i vincoli (difesa in profondità); qui basta che
+  -- uno dei due li fermi. La sezione 2 prova ciascuno dei due da solo.
   begin
     insert into public.urs_responses (risposte) values ('["non", "un", "oggetto"]');
     raise exception 'TEST FALLITO: accettato un invio che non è un oggetto JSON';
-  exception when check_violation then
-    raise notice 'OK: invio non-oggetto rifiutato';
+  exception
+    when check_violation then
+      raise notice 'OK: invio non-oggetto rifiutato (vincolo)';
+    when insufficient_privilege then
+      if sqlerrm not like '%row-level security%' then raise; end if;
+      raise notice 'OK: invio non-oggetto rifiutato (policy)';
   end;
 
   begin
@@ -70,8 +79,12 @@ begin
     insert into public.urs_responses (risposte)
       values (jsonb_build_object('test', repeat('a', 300000)));
     raise exception 'TEST FALLITO: accettato un invio oltre 256 KB non compressi';
-  exception when check_violation then
-    raise notice 'OK: invio oltre 256 KB rifiutato';
+  exception
+    when check_violation then
+      raise notice 'OK: invio oltre 256 KB rifiutato (vincolo)';
+    when insufficient_privilege then
+      if sqlerrm not like '%row-level security%' then raise; end if;
+      raise notice 'OK: invio oltre 256 KB rifiutato (policy)';
   end;
 
   begin
@@ -80,8 +93,94 @@ begin
   exception when insufficient_privilege then
     raise notice 'OK: esecuzione diretta della funzione anti-flood rifiutata';
   end;
+
+  -- public.rls_auto_enable() è di Supabase (opzione "Enable automatic RLS"): anon non deve poterla
+  -- eseguire. Senza EXECUTE l'errore è "permission denied"; se invece arriva "trigger functions can
+  -- only be called as triggers" vuol dire che anon HA il permesso e si ferma solo per il tipo di funzione.
+  if pg_catalog.to_regprocedure('public.rls_auto_enable()') is null then
+    raise notice 'SALTATO: public.rls_auto_enable() non esiste in questo progetto';
+  else
+    begin
+      perform public.rls_auto_enable();
+      raise exception 'TEST FALLITO: anon può eseguire public.rls_auto_enable()';
+    exception
+      when insufficient_privilege then
+        raise notice 'OK: esecuzione diretta di public.rls_auto_enable() rifiutata';
+      when feature_not_supported then
+        raise exception 'TEST FALLITO: anon ha ancora il permesso EXECUTE su public.rls_auto_enable() '
+                        '(riesegui setup.sql; se resta, la funzione appartiene a un altro ruolo)';
+    end;
+  end if;
 end;
 $$;
+
+-- ---------------------------------------------------------------------------------------------
+-- 2. Difesa in profondità: vincoli e policy devono rifiutare gli invii non validi ANCHE da soli
+-- ---------------------------------------------------------------------------------------------
+reset role;
+
+-- 2a. I vincoli da soli: il proprietario della tabella non passa dalla RLS, quindi qui agiscono
+--     solo i vincoli.
+do $$
+begin
+  begin
+    insert into public.urs_responses (risposte) values ('["non", "un", "oggetto"]');
+    raise exception 'TEST FALLITO: il vincolo non rifiuta un invio che non è un oggetto JSON';
+  exception when check_violation then
+    raise notice 'OK: il vincolo da solo rifiuta l''invio non-oggetto';
+  end;
+  begin
+    insert into public.urs_responses (risposte) values (jsonb_build_object('test', repeat('a', 300000)));
+    raise exception 'TEST FALLITO: il vincolo non rifiuta un invio oltre 256 KB';
+  exception when check_violation then
+    raise notice 'OK: il vincolo da solo rifiuta l''invio oltre 256 KB';
+  end;
+end;
+$$;
+
+-- 2b. La policy da sola: tolgo i due vincoli dentro un savepoint, provo come anon, e annullo subito
+--     (i vincoli tornano al "rollback to savepoint", prima ancora del rollback finale).
+savepoint senza_vincoli;
+alter table public.urs_responses
+  drop constraint risposte_e_un_oggetto,
+  drop constraint risposte_max_256kb;
+set local role anon;
+
+do $$
+begin
+  insert into public.urs_responses (risposte) values ('{"test": "valido, solo policy"}');
+  raise notice 'OK: senza vincoli la policy accetta l''invio valido';
+  begin
+    insert into public.urs_responses (risposte) values ('["non", "un", "oggetto"]');
+    raise exception 'TEST FALLITO: la policy da sola accetta un invio che non è un oggetto JSON';
+  exception when insufficient_privilege then
+    if sqlerrm not like '%row-level security%' then raise; end if;
+    raise notice 'OK: la policy da sola rifiuta l''invio non-oggetto';
+  end;
+  begin
+    insert into public.urs_responses (risposte) values (jsonb_build_object('test', repeat('a', 300000)));
+    raise exception 'TEST FALLITO: la policy da sola accetta un invio oltre 256 KB';
+  exception when insufficient_privilege then
+    if sqlerrm not like '%row-level security%' then raise; end if;
+    raise notice 'OK: la policy da sola rifiuta l''invio oltre 256 KB';
+  end;
+end;
+$$;
+
+rollback to savepoint senza_vincoli;
+
+do $$
+begin
+  if (select count(*) from pg_catalog.pg_constraint
+      where conrelid = 'public.urs_responses'::regclass
+        and conname in ('risposte_e_un_oggetto', 'risposte_max_256kb')) <> 2 then
+    raise exception 'TEST FALLITO: i vincoli non sono tornati dopo il savepoint';
+  end if;
+  raise notice 'OK: vincoli ripristinati';
+end;
+$$;
+
+set local role anon;
 
 -- Freno anti-flood orario: al più tardi il 21° invio dell'ultima ora deve essere rifiutato.
 do $$
@@ -105,7 +204,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------------------------
--- 2. Tetto totale di 200 righe (serve il ruolo proprietario per creare righe "vecchie")
+-- 3. Tetto totale di 200 righe (serve il ruolo proprietario per creare righe "vecchie")
 -- ---------------------------------------------------------------------------------------------
 reset role;
 
@@ -138,6 +237,47 @@ end;
 $$;
 
 reset role;
+
+-- ---------------------------------------------------------------------------------------------
+-- 4. public.rls_auto_enable() di Supabase: nessuno la esegue direttamente, ma l'attivazione
+--    automatica della RLS funziona ancora (Postgres non controlla EXECUTE per gli event trigger)
+-- ---------------------------------------------------------------------------------------------
+do $$
+declare
+  funzione regprocedure := pg_catalog.to_regprocedure('public.rls_auto_enable()');
+  evento   name;
+  rls      boolean;
+begin
+  if funzione is null then
+    raise notice 'SALTATO: public.rls_auto_enable() non esiste in questo progetto';
+    return;
+  end if;
+
+  if pg_catalog.has_function_privilege('anon', funzione::oid, 'execute')
+     or pg_catalog.has_function_privilege('authenticated', funzione::oid, 'execute') then
+    raise exception 'TEST FALLITO: anon o authenticated hanno EXECUTE su public.rls_auto_enable()';
+  end if;
+  raise notice 'OK: anon e authenticated non hanno EXECUTE su public.rls_auto_enable()';
+
+  select evtname into evento
+    from pg_catalog.pg_event_trigger
+    where evtfoid = funzione::oid and evtenabled <> 'D'
+    limit 1;
+  if evento is null then
+    raise notice 'SALTATO: nessun event trigger attivo usa public.rls_auto_enable()';
+    return;
+  end if;
+
+  create table public.urs_prova_rls_automatica (x int);
+  select relrowsecurity into rls
+    from pg_catalog.pg_class
+    where oid = 'public.urs_prova_rls_automatica'::regclass;
+  if not rls then
+    raise exception 'TEST FALLITO: la tabella nuova non ha la RLS attiva (event trigger %)', evento;
+  end if;
+  raise notice 'OK: l''event trigger % attiva ancora la RLS sulle tabelle nuove', evento;
+end;
+$$;
 
 select 'TUTTI I TEST SUPERATI' as esito;
 
